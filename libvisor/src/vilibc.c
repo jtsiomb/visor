@@ -3,6 +3,72 @@
 
 #ifndef HAVE_LIBC
 
+int atoi(const char *str)
+{
+	return strtol(str, 0, 10);
+}
+
+long atol(const char *str)
+{
+	return strtol(str, 0, 10);
+}
+
+long strtol(const char *str, char **endp, int base)
+{
+	long acc = 0;
+	int sign = 1;
+	int valid = 0;
+	const char *start = str;
+
+	while(isspace(*str)) str++;
+
+	if(base == 0) {
+		if(str[0] == '0') {
+			if(str[1] == 'x' || str[1] == 'X') {
+				base = 16;
+			} else {
+				base = 8;
+			}
+		} else {
+			base = 10;
+		}
+	}
+
+	if(*str == '+') {
+		str++;
+	} else if(*str == '-') {
+		sign = -1;
+		str++;
+	}
+
+	while(*str) {
+		long val = 0x7fffffff;
+		char c = tolower(*str);
+
+		if(isdigit(c)) {
+			val = *str - '0';
+		} else if(c >= 'a' && c <= 'f') {
+			val = 10 + c - 'a';
+		} else {
+			break;
+		}
+		if(val >= base) {
+			break;
+		}
+		valid = 1;
+
+		acc = acc * base + val;
+		str++;
+	}
+
+	if(endp) {
+		*endp = (char*)(valid ? str : start);
+	}
+
+	return sign > 0 ? acc : -acc;
+}
+
+
 void *memset(void *s, int c, unsigned long n)
 {
 	char *p = s;
@@ -50,6 +116,17 @@ unsigned long strlen(const char *s)
 	return len;
 }
 
+char *strchr(const char *s, int c)
+{
+	while(*s) {
+		if(*s == c) {
+			return (char*)s;
+		}
+		s++;
+	}
+	return 0;
+}
+
 int strcmp(const char *s1, const char *s2)
 {
 	while(*s1 && *s1 == *s2) {
@@ -57,6 +134,69 @@ int strcmp(const char *s1, const char *s2)
 		s2++;
 	}
 	return *s1 - *s2;
+}
+
+char *strcpy(char *dest, const char *src)
+{
+	char *dptr = dest;
+	while((*dptr++ = *src++));
+	return dest;
+}
+
+
+int isalnum(int c)
+{
+	return isalpha(c) || isdigit(c);
+}
+
+int isalpha(int c)
+{
+	return isupper(c) || islower(c);
+}
+
+int isblank(int c)
+{
+	return c == ' ' || c == '\t';
+}
+
+int isdigit(int c)
+{
+	return c >= '0' && c <= '9';
+}
+
+int isupper(int c)
+{
+	return c >= 'A' && c <= 'Z';
+}
+
+int islower(int c)
+{
+	return c >= 'a' && c <= 'z';
+}
+
+int isgraph(int c)
+{
+	return c > ' ' && c <= '~';
+}
+
+int isprint(int c)
+{
+	return isgraph(c) || c == ' ';
+}
+
+int isspace(int c)
+{
+	return isblank(c) || c == '\f' || c == '\n' || c == '\r' || c == '\v';
+}
+
+int toupper(int c)
+{
+	return islower(c) ? (c + ('A' - 'a')) : c;
+}
+
+int tolower(int c)
+{
+	return isupper(c) ? (c - ('A' - 'a')) : c;
 }
 
 #endif	/* !def HAVE_LIBC */

@@ -20,12 +20,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 typedef long vi_addr;
 typedef long vi_motion;
+typedef void vi_file;
 
 struct visor;
 struct vi_buffer;
 
 struct vi_span {
-	vi_addr beg, end;
+	vi_addr beg;
+	unsigned long size;
 };
 
 enum vi_motdir {
@@ -67,14 +69,14 @@ struct vi_alloc {
 };
 
 struct vi_fileops {
-	void *(*open)(const char *path);
-	long (*size)(void *file);
-	void (*close)(void *file);
-	void *(*map)(void *file);
-	void (*unmap)(void *file);
-	long (*read)(void *file, void *buf, long count);
-	long (*write)(void *file, void *buf, long count);
-	long (*seek)(void *file, long offs, int whence);
+	vi_file *(*open)(const char *path);
+	long (*size)(vi_file *file);
+	void (*close)(vi_file *file);
+	void *(*map)(vi_file *file);
+	void (*unmap)(vi_file *file);
+	long (*read)(vi_file *file, void *buf, long count);
+	long (*write)(vi_file *file, void *buf, long count);
+	long (*seek)(vi_file *file, long offs, int whence);
 };
 
 struct vi_ttyops {
@@ -100,6 +102,7 @@ struct visor *vi_create(struct vi_alloc *mm);
 void vi_destroy(struct visor *vi);
 
 void vi_set_fileops(struct visor *vi, struct vi_fileops *fop);
+void vi_set_ttyops(struct visor *vi, struct vi_ttyops *tty);
 
 /* vi_new_buf creates a new buffer and inserts it in the buffer list. If the
  * path pointer is null, the new buffer will be empty, otherwise it's as if it
@@ -110,11 +113,14 @@ int vi_delete_buf(struct visor *vi, struct vi_buffer *vb);
 int vi_num_buf(struct visor *vi);
 
 struct vi_buffer *vi_getcur_buf(struct visor *vi);
-int vi_setcur_buf(struct visor *vi, struct vi_buffer *vb);
+void vi_setcur_buf(struct visor *vi, struct vi_buffer *vb);
 
 struct vi_buffer *vi_next_buf(struct visor *vi);
 struct vi_buffer *vi_prev_buf(struct visor *vi);
 
+
+/* reset a buffer to the newly created state, freeing all resources */
+void vi_buf_reset(struct vi_buffer *vb);
 
 /* Read a file into the buffer.
  * Returns 0 on success, -1 on failure.

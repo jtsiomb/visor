@@ -11,19 +11,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
+#include <limit.h>
 #else
+
+int atoi(const char *str);
+long atol(const char *str);
+long strtol(const char *str, char **endp, int base);
 
 void *memset(void *s, int c, unsigned long n);
 void *memcpy(void *dest, const void *src, unsigned long n);
 void *memmove(void *dest, const void *src, unsigned long n);
 unsigned long strlen(const char *s);
+char *strchr(const char *s, int c);
 int strcmp(const char *s1, const char *s2);
+char *strcpy(char *dest, const char *src);
 
 #ifdef __GNUC__
 typedef __builtin_va_list va_list;
 #define va_start(v,l)	__builtin_va_start(v,l)
-#define va_end(v)	__builtin_va_end(v)
-#define va_arg(v,l)	__builtin_va_arg(v,l)
+#define va_end(v)		__builtin_va_end(v)
+#define va_arg(v,l)		__builtin_va_arg(v,l)
 #else	/* !def __GNUC__ */
 #error "stdargs implementation for this compiler missing (libvisor/src/vilibc.h)"
 #endif
@@ -32,6 +40,19 @@ int sprintf(char *buf, const char *fmt, ...);
 int vsprintf(char *buf, const char *fmt, va_list ap);
 int snprintf(char *buf, unsigned long sz, const char *fmt, ...);
 int vsnprintf(char *buf, unsigned long sz, const char *fmt, va_list ap);
+
+int isalnum(int c);
+int isalpha(int c);
+#define isascii(c)	((c) < 128)
+int isblank(int c);
+int isdigit(int c);
+int isupper(int c);
+int islower(int c);
+int isprint(int c);
+int isspace(int c);
+
+int toupper(int c);
+int tolower(int c);
 
 #endif	/* !HAVE_LIBC */
 

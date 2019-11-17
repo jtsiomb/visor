@@ -19,13 +19,18 @@ struct vi_buffer {
 	vi_addr cursor, view_start;
 	int view_xscroll;
 
+	vi_file *fp;
+	int file_mapped;
+
 	char *orig;
-	long orig_size;
+	unsigned long orig_size;
 	char *add;
 	int add_size, add_max;
 
 	struct vi_span *spans;
 	int num_spans, max_spans;
 };
+
+enum { SPAN_ORIG, SPAN_ADD };
 
 #endif	/* VIMPL_H_ */

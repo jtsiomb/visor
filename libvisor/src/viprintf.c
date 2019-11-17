@@ -6,6 +6,8 @@ enum {
 
 static int intern_printf(int out, char *buf, unsigned long sz, const char *fmt, va_list ap);
 static void bwrite(int out, char *buf, unsigned long buf_sz, char *str, int sz);
+static void utoa(unsigned int val, char *buf, int base);
+static void itoa(int val, char *buf, int base);
 
 int sprintf(char *buf, const char *fmt, ...)
 {
@@ -239,11 +241,66 @@ static int intern_printf(int out, char *buf, unsigned long sz, const char *fmt, 
  */
 static void bwrite(int out, char *buf, unsigned long buf_sz, char *str, int sz)
 {
-	int i;
-
 	if(out == OUT_BUF) {
 		if(buf_sz && buf_sz <= sz) sz = buf_sz;
 		buf[sz] = 0;
 		memcpy(buf, str, sz);
 	}
 }
+
+static void utoa(unsigned int val, char *buf, int base)
+{
+	static char rbuf[16];
+	char *ptr = rbuf;
+
+	if(val == 0) {
+		*ptr++ = '0';
+	}
+
+	while(val) {
+		unsigned int digit = val % base;
+		*ptr++ = digit < 10 ? (digit + '0') : (digit - 10 + 'a');
+		val /= base;
+	}
+
+	ptr--;
+
+	while(ptr >= rbuf) {
+		*buf++ = *ptr--;
+	}
+	*buf = 0;
+}
+
+static void itoa(int val, char *buf, int base)
+{
+	static char rbuf[16];
+	char *ptr = rbuf;
+	int neg = 0;
+
+	if(val < 0) {
+		neg = 1;
+		val = -val;
+	}
+
+	if(val == 0) {
+		*ptr++ = '0';
+	}
+
+	while(val) {
+		int digit = val % base;
+		*ptr++ = digit < 10 ? (digit + '0') : (digit - 10 + 'a');
+		val /= base;
+	}
+
+	if(neg) {
+		*ptr++ = '-';
+	}
+
+	ptr--;
+
+	while(ptr >= rbuf) {
+		*buf++ = *ptr--;
+	}
+	*buf = 0;
+}
+
