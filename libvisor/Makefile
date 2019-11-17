@@ -4,7 +4,7 @@ dep = $(obj:.o=.d)
 
 liba = libvisor.a
 
-CFLAGS = -pedantic -Wall -g
+CFLAGS = -pedantic -Wall -g -Iinclude
 
 $(liba): $(obj)
 	$(AR) rcs $@ $<

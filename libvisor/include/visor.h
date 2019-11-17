@@ -60,6 +60,11 @@ enum vi_motdir {
 
 #define VI_MOTION(d, n) (((long)(n) << 8) | ((long)(d)))
 
+struct vi_alloc {
+	void *(*malloc)(unsigned long);
+	void (*free)(void*);
+	void *(*realloc)(void*, unsigned long);	/* can be null, will use malloc/free */
+};
 
 struct vi_fileops {
 	void *(*open)(const char *path);
@@ -69,6 +74,7 @@ struct vi_fileops {
 	void (*unmap)(void *file);
 	long (*read)(void *file, void *buf, long count);
 	long (*write)(void *file, void *buf, long count);
+	long (*seek)(void *file, long offs, int whence);
 };
 
 struct vi_ttyops {
@@ -84,9 +90,14 @@ struct vi_ttyops {
 	void (*status)(char *s, void *cls);
 };
 
-
-struct visor *vi_init(void);
-void vi_cleanup(struct visor *vi);
+/* Create a new instance of the visor editor.
+ * The alloc argument can be used to provide custom memory allocation
+ * functions. It can be null in a hosted build, or if you set the HAVE_LIBC
+ * preprocessor macro, in which case the standard library allocator will be
+ * used.
+ */
+struct visor *vi_create(struct vi_alloc *mm);
+void vi_destroy(struct visor *vi);
 
 void vi_set_fileops(struct visor *vi, struct vi_fileops *fop);
 

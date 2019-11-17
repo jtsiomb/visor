@@ -6,6 +6,9 @@
 struct visor {
 	struct vi_fileops fop;
 	struct vi_buffer *buflist;	/* circular linked list of buffers cur first */
+	struct vi_alloc mm;
+	struct vi_ttyops tty;
+	void *tty_cls;
 };
 
 struct vi_buffer {
