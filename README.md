@@ -4,7 +4,7 @@ visor text editor & text editor framework
 About
 -----
 *visor* is a lightweight, system-independent, device-independent, maximally
-portable, easily embeddable text editor framework. Visor is also a concrete
+portable, easily embeddable text editor framework. *visor* is also a concrete
 implementation of a text editor for a number of systems, based on the visor
 framework.
 
