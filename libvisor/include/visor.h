@@ -69,8 +69,14 @@ struct vi_alloc {
 	void *(*realloc)(void*, unsigned long);	/* can be null, will use malloc/free */
 };
 
+/* open flags (same as POSIX O_*) */
+enum { VI_RDONLY, VI_WRONLY, VI_RDWR, VI_CREAT = 0x100 };
+/* seek origin (same as C SEEK_*) */
+enum { VI_SEEK_SET, VI_SEEK_CUR, VI_SEEK_END };
+
+
 struct vi_fileops {
-	vi_file *(*open)(const char *path);
+	vi_file *(*open)(const char *path, unsigned int flags);
 	long (*size)(vi_file *file);
 	void (*close)(vi_file *file);
 	void *(*map)(vi_file *file);
@@ -138,6 +144,7 @@ long vi_buf_size(struct vi_buffer *vb);
 
 /* find the span which corresponds to the specified text position */
 struct vi_span *vi_buf_find_span(struct vi_buffer *vb, vi_addr at);
+const char *vi_buf_span_text(struct vi_buffer *vb, struct vi_span *span);
 
 void vi_buf_ins_begin(struct vi_buffer *vb, vi_motion mot);
 void vi_buf_insert(struct vi_buffer *vb, char *s);

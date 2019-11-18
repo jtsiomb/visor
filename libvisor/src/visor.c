@@ -189,17 +189,15 @@ struct vi_buffer *vi_prev_buf(struct visor *vi)
 void split_span(struct vi_buffer *vb, struct vi_span *sp, vi_addr at, unsigned long size)
 {
 	struct vi_span *tail = sp + (size ? 2 : 1);
-	int num_move = vb->num_spans - sp - 1;
+	int num_move = vb->spans + vb->num_spans - sp - 1;
 
 	memmove(tail + 1, sp + 1, num_move);
-	vb->num_span += tail - sp;
+	vb->num_spans += tail - sp;
 
-	sp->size ... CONTINUE HERE.
 }
 
 static int add_span(struct vi_buffer *vb, vi_addr at, int src, vi_addr start, unsigned long size)
 {
-	int i;
 	struct visor *vi = vb->vi;
 	struct vi_span *sp;
 
@@ -219,7 +217,7 @@ static int add_span(struct vi_buffer *vb, vi_addr at, int src, vi_addr start, un
 	}
 
 	sp->src = src;
-	sp->addr = start;
+	sp->start = start;
 	sp->size = size;
 	vb->num_spans++;
 	return 0;
@@ -256,7 +254,7 @@ int vi_buf_read(struct vi_buffer *vb, const char *path)
 
 	vi_buf_reset(vb);
 
-	if(!(fp = vi_open(path))) {
+	if(!(fp = vi_open(path, VI_RDONLY | VI_CREAT))) {
 		return -1;
 	}
 	plen = strlen(path);
@@ -280,7 +278,7 @@ int vi_buf_read(struct vi_buffer *vb, const char *path)
 			vb->file_mapped = 1;
 		}
 
-		if(add_span(vb, SPAN_ORIG, 0, fsz) == -1) {
+		if(add_span(vb, 0, SPAN_ORIG, 0, fsz) == -1) {
 			vi_error(vi, "failed to allocate span\n");
 			vi_buf_reset(vb);
 			return -1;
@@ -292,4 +290,76 @@ int vi_buf_read(struct vi_buffer *vb, const char *path)
 
 int vi_buf_write(struct vi_buffer *vb, const char *path)
 {
+	int i, wbuf_count;
+	struct visor *vi = vb->vi;
+	vi_file *fp;
+	static char wbuf[512];
+
+	if(!path) path = vb->path;
+	if(!path) {
+		vi_error(vi, "failed to write buffer, unknown path\n");
+		return -1;
+	}
+
+	if(!(fp = vi_open(path, VI_WRONLY | VI_CREAT))) {
+		vi_error(vi, "failed to open %s for writing\n", path);
+		return -1;
+	}
+
+	wbuf_count = 0;
+	for(i=0; i<vb->num_spans; i++) {
+		struct vi_span *sp = vb->spans + i;
+		const char *sptxt = vi_buf_span_text(vb, sp);
+		int n, count = 0;
+		while(count < sp->size) {
+			n = sp->size - count;
+			if(n > sizeof wbuf - wbuf_count) {
+				n = sizeof wbuf - wbuf_count;
+			}
+			memcpy(wbuf + wbuf_count, sptxt + count, n);
+			count += n;
+			wbuf_count += n;
+		}
+
+		if(wbuf_count >= sizeof wbuf) {
+			vi_write(fp, wbuf, wbuf_count);
+		}
+	}
+
+	if(wbuf_count > 0) {
+		vi_write(fp, wbuf, wbuf_count);
+	}
+	vi_close(fp);
+	return 0;
+}
+
+long vi_buf_size(struct vi_buffer *vb)
+{
+	int i;
+	long sz = 0;
+
+	for(i=0; i<vb->num_spans; i++) {
+		sz += vb->spans[i].size;
+	}
+	return sz;
+}
+
+struct vi_span *vi_buf_find_span(struct vi_buffer *vb, vi_addr at)
+{
+	int i;
+	long sz = 0;
+
+	for(i=0; i<vb->num_spans; i++) {
+		sz += vb->spans[i].size;
+		if(sz > at) {
+			return vb->spans + i;
+		}
+	}
+	return 0;
+}
+
+const char *vi_buf_span_text(struct vi_buffer *vb, struct vi_span *sp)
+{
+	const char *buf = sp->src == SPAN_ORIG ? vb->orig : vb->add;
+	return buf + sp->start;
 }
