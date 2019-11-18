@@ -30,6 +30,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdarg.h>
 #include <ctype.h>
 #include <limit.h>
+#include <assert.h>
 #else
 
 int atoi(const char *str);
@@ -70,6 +71,8 @@ int isspace(int c);
 
 int toupper(int c);
 int tolower(int c);
+
+#define assert(x)
 
 #endif	/* !HAVE_LIBC */
 

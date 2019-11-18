@@ -179,12 +179,32 @@ struct vi_buffer *vi_prev_buf(struct visor *vi)
 	return vi->buflist ? vi->buflist->prev : 0;
 }
 
-static int add_span(struct vi_buffer *vb, int src, vi_addr start, unsigned long size)
+/* split_span splits the span sp. if size > 0 it moves the second part to sp+2,
+ * leaving an empty place at sp+1 for the new span. The start point of the
+ * second part is adjusted by size.
+ *
+ * It can't fail, because it's always called with the span array having at
+ * least two empty slots (see: add_span).
+ */
+void split_span(struct vi_buffer *vb, struct vi_span *sp, vi_addr at, unsigned long size)
 {
+	struct vi_span *tail = sp + (size ? 2 : 1);
+	int num_move = vb->num_spans - sp - 1;
+
+	memmove(tail + 1, sp + 1, num_move);
+	vb->num_span += tail - sp;
+
+	sp->size ... CONTINUE HERE.
+}
+
+static int add_span(struct vi_buffer *vb, vi_addr at, int src, vi_addr start, unsigned long size)
+{
+	int i;
 	struct visor *vi = vb->vi;
 	struct vi_span *sp;
 
-	if(vb->num_spans >= vb->max_spans) {
+	/* make sure we have space for at least two new spans (split + add) */
+	if(vb->num_spans + 1 >= vb->max_spans) {
 		int newmax = vb->max_spans > 0 ? (vb->max_spans << 1) : 16;
 		struct vi_span *tmp = vi_realloc(vb->spans, newmax * sizeof *tmp);
 		if(!tmp) return -1;
@@ -192,9 +212,16 @@ static int add_span(struct vi_buffer *vb, int src, vi_addr start, unsigned long 
 		vb->max_spans = newmax;
 	}
 
-	sp = vb->spans + vb->num_spans++;
-	sp->beg = start;
+	if((sp = vi_buf_find_span(vb, at))) {
+		split_span(vb, sp++, at, size);
+	} else {
+		sp = vb->spans + vb->num_spans;
+	}
+
+	sp->src = src;
+	sp->addr = start;
 	sp->size = size;
+	vb->num_spans++;
 	return 0;
 }
 
@@ -261,4 +288,8 @@ int vi_buf_read(struct vi_buffer *vb, const char *path)
 	}
 	vb->orig_size = fsz;
 	return 0;
+}
+
+int vi_buf_write(struct vi_buffer *vb, const char *path)
+{
 }

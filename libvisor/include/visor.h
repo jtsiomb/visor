@@ -26,8 +26,9 @@ struct visor;
 struct vi_buffer;
 
 struct vi_span {
-	vi_addr beg;
+	vi_addr start;
 	unsigned long size;
+	int src;
 };
 
 enum vi_motdir {
@@ -134,6 +135,9 @@ int vi_buf_read(struct vi_buffer *vb, const char *path);
  */
 int vi_buf_write(struct vi_buffer *vb, const char *path);
 long vi_buf_size(struct vi_buffer *vb);
+
+/* find the span which corresponds to the specified text position */
+struct vi_span *vi_buf_find_span(struct vi_buffer *vb, vi_addr at);
 
 void vi_buf_ins_begin(struct vi_buffer *vb, vi_motion mot);
 void vi_buf_insert(struct vi_buffer *vb, char *s);
