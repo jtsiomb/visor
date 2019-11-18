@@ -142,8 +142,11 @@ int vi_buf_read(struct vi_buffer *vb, const char *path);
 int vi_buf_write(struct vi_buffer *vb, const char *path);
 long vi_buf_size(struct vi_buffer *vb);
 
-/* find the span which corresponds to the specified text position */
-struct vi_span *vi_buf_find_span(struct vi_buffer *vb, vi_addr at);
+/* find the span which corresponds to the specified text position
+ * if soffs is not null, the relative offset of the specified address from the
+ * start of the span is stored there.
+ */
+struct vi_span *vi_buf_find_span(struct vi_buffer *vb, vi_addr at, vi_addr *soffs);
 const char *vi_buf_span_text(struct vi_buffer *vb, struct vi_span *span);
 
 void vi_buf_ins_begin(struct vi_buffer *vb, vi_motion mot);

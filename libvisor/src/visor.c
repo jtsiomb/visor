@@ -186,14 +186,37 @@ struct vi_buffer *vi_prev_buf(struct visor *vi)
  * It can't fail, because it's always called with the span array having at
  * least two empty slots (see: add_span).
  */
-void split_span(struct vi_buffer *vb, struct vi_span *sp, vi_addr at, unsigned long size)
+void split_span(struct vi_buffer *vb, struct vi_span *sp, vi_addr spoffs, unsigned long size)
 {
-	struct vi_span *tail = sp + (size ? 2 : 1);
+	int newseg = size > 0 ? 1 : 0;
+	struct vi_span *tail = sp + newseg + 1;
 	int num_move = vb->spans + vb->num_spans - sp - 1;
 
-	memmove(tail + 1, sp + 1, num_move);
+	memmove(tail + 1, sp + 1, num_move * sizeof *sp);
 	vb->num_spans += tail - sp;
 
+	*tail = *sp;
+	sp->size = spoffs;
+	tail->start += spoffs;
+	tail->size -= spoffs;
+
+	sp = tail;
+	for(;;) {
+		if(size <= tail->size) {
+			tail->size -= size;
+			break;
+		}
+		size -= tail->size;
+		tail->size = 0;
+		tail++;
+	}
+
+	if(tail > sp) {
+		/* we produced one or more zero-sized spans, drop them */
+		num_move = vb->spans + vb->num_spans - (tail - sp);
+		memmove(sp, tail, num_move * sizeof *sp);
+		vb->num_spans -= num_move;
+	}
 }
 
 static int add_span(struct vi_buffer *vb, vi_addr at, int src, vi_addr start, unsigned long size)
@@ -210,8 +233,12 @@ static int add_span(struct vi_buffer *vb, vi_addr at, int src, vi_addr start, un
 		vb->max_spans = newmax;
 	}
 
-	if((sp = vi_buf_find_span(vb, at))) {
-		split_span(vb, sp++, at, size);
+	if((sp = vi_buf_find_span(vb, at, &spoffs))) {
+		if(spoffs > 0) {
+			split_span(vb, sp++, spoffs, 1);
+		} else {
+			split_span(vb, sp++, 0, 0);
+		}
 	} else {
 		sp = vb->spans + vb->num_spans;
 	}
