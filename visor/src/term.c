@@ -19,7 +19,7 @@ int term_init(const char *ttypath)
 	struct termios term;
 	struct winsize winsz;
 
-	if((ttyfd = open("/dev/tty", O_RDWR)) == -1) {
+	if((ttyfd = open(ttypath ? ttypath : "/dev/tty", O_RDWR)) == -1) {
 		perror("failed to open /dev/tty");
 		return -1;
 	}
