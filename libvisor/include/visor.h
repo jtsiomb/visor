@@ -77,8 +77,8 @@ enum { VI_SEEK_SET, VI_SEEK_CUR, VI_SEEK_END };
 
 struct vi_fileops {
 	vi_file *(*open)(const char *path, unsigned int flags);
-	long (*size)(vi_file *file);
 	void (*close)(vi_file *file);
+	long (*size)(vi_file *file);
 	void *(*map)(vi_file *file);
 	void (*unmap)(vi_file *file);
 	long (*read)(vi_file *file, void *buf, long count);

@@ -213,7 +213,7 @@ void split_span(struct vi_buffer *vb, struct vi_span *sp, vi_addr spoffs, unsign
 
 	if(tail > sp) {
 		/* we produced one or more zero-sized spans, drop them */
-		num_move = vb->spans + vb->num_spans - (tail - sp);
+		num_move = vb->num_spans - (tail - sp);
 		memmove(sp, tail, num_move * sizeof *sp);
 		vb->num_spans -= num_move;
 	}
@@ -223,6 +223,7 @@ static int add_span(struct vi_buffer *vb, vi_addr at, int src, vi_addr start, un
 {
 	struct visor *vi = vb->vi;
 	struct vi_span *sp;
+	vi_addr spoffs;
 
 	/* make sure we have space for at least two new spans (split + add) */
 	if(vb->num_spans + 1 >= vb->max_spans) {
@@ -371,14 +372,16 @@ long vi_buf_size(struct vi_buffer *vb)
 	return sz;
 }
 
-struct vi_span *vi_buf_find_span(struct vi_buffer *vb, vi_addr at)
+struct vi_span *vi_buf_find_span(struct vi_buffer *vb, vi_addr at, vi_addr *soffs)
 {
 	int i;
-	long sz = 0;
+	long sz = 0, prev_sz;
 
 	for(i=0; i<vb->num_spans; i++) {
+		prev_sz = sz;
 		sz += vb->spans[i].size;
 		if(sz > at) {
+			if(soffs) *soffs = at - prev_sz;
 			return vb->spans + i;
 		}
 	}

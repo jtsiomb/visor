@@ -3,7 +3,8 @@ obj = $(src:.c=.o)
 dep = $(obj:.o=.d)
 bin = visor
 
-CFLAGS = -pedantic -Wall -g
+CFLAGS = -pedantic -Wall -g -I../libvisor/include
+LDFLAGS = -L../libvisor -lvisor
 
 $(bin): $(obj)
 	$(CC) -o $@ $(obj) $(LDFLAGS)
