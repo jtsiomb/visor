@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include "term.h"
 #include "visor.h"
 
 struct file {
-	FILE *fp;
+	int fd;
 	void *maddr;
 	size_t msize;
 };
@@ -101,7 +105,10 @@ static int init(void)
 	vi_set_fileops(vi, &fops);
 
 	for(i=0; i<num_fpaths; i++) {
-		/* open fpaths[i] */
+		if(!vi_new_buf(vi, fpaths[i])) {
+			return -1;
+		}
+		printf("loaded file: %s\n", fpaths[i]);
 	}
 	return 0;
 }
@@ -117,65 +124,80 @@ static void cleanup(void)
 static vi_file *file_open(const char *path, unsigned int flags)
 {
 	struct file *file;
-	const char *attr;
-
-	switch(flags & 0xff) {
-	case VI_RDONLY:
-		attr = "rb";
-		break;
-
-	case VI_WRONLY:
-		attr = (flags & VI_CREAT) ? "w+b" : "wb";
-		break;
-
-	case VI_RDWR:
-		attr = (flags & VI_CREAT) ? "w+b" : "r+b";
-		break;
-
-	default:
-		return 0;
-	}
-
 
 	if(!(file = calloc(1, sizeof *file))) {
 		return 0;
 	}
-	if(!(file->fp = fopen(path, attr))) {
+	if((file->fd = open(path, flags)) == -1) {
 		free(file);
 		return 0;
 	}
-	return file;
+	return (vi_file*)file;
 }
 
-static void file_close(vi_file *file)
+static void file_close(vi_file *vif)
 {
+	struct file *file = vif;
+	if(!file) return;
+
+	if(file->fd >= 0) {
+		if(file->maddr) {
+			file_unmap(file);
+		}
+		close(file->fd);
+	}
+	free(file);
 }
 
-static long file_size(vi_file *file)
+static long file_size(vi_file *vif)
 {
-	return -1;
+	struct file *file = vif;
+	struct stat st;
+
+	if(fstat(file->fd, &st) == -1) {
+		return -1;
+	}
+	return st.st_size;
 }
 
-static void *file_map(vi_file *file)
+static void *file_map(vi_file *vif)
 {
-	return 0;
+	struct file *file = vif;
+	long sz;
+
+	if((sz = file_size(file)) == -1) {
+		return 0;
+	}
+	if((file->maddr = mmap(0, sz, PROT_READ, MAP_PRIVATE, file->fd, 0)) == (void*)-1) {
+		return 0;
+	}
+	file->msize = sz;
+	return file->maddr;
 }
 
-static void file_unmap(vi_file *file)
+static void file_unmap(vi_file *vif)
 {
+	struct file *file = vif;
+	if(file->maddr) {
+		munmap(file->maddr, file->msize);
+	}
+	file->maddr = 0;
 }
 
-static long file_read(vi_file *file, void *buf, long count)
+static long file_read(vi_file *vif, void *buf, long count)
 {
-	return -1;
+	struct file *file = vif;
+	return read(file->fd, buf, count);
 }
 
-static long file_write(vi_file *file, void *buf, long count)
+static long file_write(vi_file *vif, void *buf, long count)
 {
-	return -1;
+	struct file *file = vif;
+	return write(file->fd, buf, count);
 }
 
-static long file_seek(vi_file *file, long offs, int whence)
+static long file_seek(vi_file *vif, long offs, int whence)
 {
-	return -1;
+	struct file *file = vif;
+	return lseek(file->fd, offs, whence);
 }

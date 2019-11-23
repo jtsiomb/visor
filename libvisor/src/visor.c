@@ -271,6 +271,7 @@ void vi_buf_reset(struct vi_buffer *vb)
 	memset(vb, 0, sizeof *vb);
 	vb->prev = prev;
 	vb->next = next;
+	vb->vi = vi;
 }
 
 int vi_buf_read(struct vi_buffer *vb, const char *path)

@@ -7,7 +7,7 @@ liba = libvisor.a
 CFLAGS = -pedantic -Wall -g -Iinclude
 
 $(liba): $(obj)
-	$(AR) rcs $@ $<
+	$(AR) rcs $@ $(obj)
 
 -include $(dep)
 
