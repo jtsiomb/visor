@@ -26,6 +26,8 @@ struct visor {
 	struct vi_alloc mm;
 	struct vi_ttyops tty;
 	void *tty_cls;
+
+	int term_width, term_height;
 };
 
 struct vi_buffer {

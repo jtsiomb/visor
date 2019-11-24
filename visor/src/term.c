@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
@@ -11,7 +14,10 @@ static void sighandler(int s);
 
 static int term_width, term_height;
 static int ttyfd = -1;
+static int selfpipe[2];
 static struct termios saved_term;
+
+static void (*cb_resized)(int, int);
 
 
 int term_init(const char *ttypath)
@@ -42,6 +48,8 @@ int term_init(const char *ttypath)
 	term_width = winsz.ws_col;
 	term_height = winsz.ws_row;
 
+	pipe(selfpipe);
+
 	signal(SIGWINCH, sighandler);
 	return 0;
 }
@@ -53,9 +61,84 @@ void term_cleanup(void)
 	ttyfd = -1;
 }
 
+void term_getsize(int *width, int *height)
+{
+	*width = term_width;
+	*height = term_height;
+}
+
+void term_resize_func(void (*func)(int, int))
+{
+	cb_resized = func;
+}
+
+
+static char termbuf[1024];
+static int termbuf_len;
+
+void term_send(const char *s, int size)
+{
+	if(size >= sizeof termbuf) {
+		/* too large, just flush the buffer and write directly to the tty */
+		term_flush();
+		write(ttyfd, s, size);
+	} else {
+		if(size >= sizeof termbuf - termbuf_len) {
+			term_flush();
+		}
+		memcpy(termbuf + termbuf_len, s, size);
+		termbuf_len += size;
+	}
+}
+
+void term_puts(const char *s)
+{
+	term_send(s, strlen(s));
+}
+
+void term_printf(const char *fmt, ...)
+{
+	static char *buf;
+	static long bufsz;
+	va_list ap;
+	long len;
+
+	if(!buf) {
+		bufsz = 512;
+		if(!(buf = malloc(bufsz))) {
+			return;
+		}
+	}
+
+	for(;;) {
+		va_start(ap, fmt);
+		len = vsnprintf(buf, bufsz, fmt, ap);
+		va_end(ap);
+
+		if(len < bufsz) break;
+		if(len < 0) {
+			void *tmp;
+			long n = bufsz << 1;
+			if(!(tmp = realloc(buf, n))) {
+				break;	/* if realloc fails, will result in truncated output */
+			}
+		}
+	}
+
+	term_send(buf, len);
+}
+
+void term_flush(void)
+{
+	if(termbuf_len > 0) {
+		write(ttyfd, termbuf, termbuf_len);
+		termbuf_len = 0;
+	}
+}
+
 void term_clear(void)
 {
-	write(ttyfd, "\033[2J", 4);
+	term_puts("\033[2J");
 }
 
 int term_getchar(void)

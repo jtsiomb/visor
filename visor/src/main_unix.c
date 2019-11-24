@@ -16,6 +16,7 @@ struct file {
 static int parse_args(int argc, char **argv);
 static int init(void);
 static void cleanup(void);
+static void resized(int x, int y);
 /* file operations */
 static vi_file *file_open(const char *path, unsigned int flags);
 static void file_close(vi_file *file);
@@ -57,6 +58,8 @@ int main(int argc, char **argv)
 	if(init() == -1) {
 		return 1;
 	}
+
+	vi_redraw(vi);
 
 	for(;;) {
 		int c = term_getchar();
@@ -108,7 +111,6 @@ static int init(void)
 		if(!vi_new_buf(vi, fpaths[i])) {
 			return -1;
 		}
-		printf("loaded file: %s\n", fpaths[i]);
 	}
 	return 0;
 }

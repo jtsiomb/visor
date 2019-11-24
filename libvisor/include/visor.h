@@ -111,6 +111,9 @@ void vi_destroy(struct visor *vi);
 void vi_set_fileops(struct visor *vi, struct vi_fileops *fop);
 void vi_set_ttyops(struct visor *vi, struct vi_ttyops *tty);
 
+void vi_window(struct visor *vi, int xsz, int ysz);
+void vi_redraw(struct visor *vi);
+
 /* vi_new_buf creates a new buffer and inserts it in the buffer list. If the
  * path pointer is null, the new buffer will be empty, otherwise it's as if it
  * was followed by a vi_buf_read call to read a file into the buffer.

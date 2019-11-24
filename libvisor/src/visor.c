@@ -33,6 +33,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define vi_write	vi->fop.write
 #define vi_seek		vi->fop.seek
 
+#define vi_clear()			vi->tty.clear(vi->tty_cls)
+#define vi_clear_line()		vi->tty.clear_line(vi->tty_cls)
+#define vi_clear_line_at(y)	vi->tty.clear_line_at(y, vi->tty_cls)
+#define vi_setcursor(x, y)	vi->tty.setcursor(x, y, vi->tty_cls)
+#define vi_putchar(c)		vi->tty.putchar(c, vi->tty_cls)
+#define vi_putchar_at(x, y, c)	v->tty.putchar_at(x, y, c, vi->tty_cls)
+#define vi_scroll(n)		vi->tty.scroll(n, vi->tty_cls)
+#define vi_del_back()		vi->tty.del_back(vi->tty_cls)
+#define vi_del_fwd()		vi->tty.del_fwd(vi->tty_cls)
+#define vi_status(s)		vi->tty.status(s, vi->tty_cls)
+
+static int remove_buf(struct visor *vi, struct vi_buffer *vb);
+static int add_span(struct vi_buffer *vb, vi_addr at, int src, vi_addr start, unsigned long size);
+
 #ifdef HAVE_LIBC
 static const struct vi_alloc stdalloc = { malloc, free, realloc };
 #endif
@@ -53,6 +67,9 @@ struct visor *vi_create(struct vi_alloc *mm)
 	memset(vi, 0, sizeof *vi);
 	vi->mm = *mm;
 
+	vi->term_width = 80;
+	vi->term_height = 24;
+
 	return vi;
 }
 
@@ -72,6 +89,30 @@ void vi_set_fileops(struct visor *vi, struct vi_fileops *fop)
 void vi_set_ttyops(struct visor *vi, struct vi_ttyops *tty)
 {
 	vi->tty = *tty;
+}
+
+void vi_term_size(struct visor *vi, int xsz, int ysz)
+{
+	vi->term_width = xsz;
+	vi->term_height = ysz;
+}
+
+void vi_redraw(struct visor *vi)
+{
+	struct vi_buffer *vb;
+	struct vi_span *sp, *spend;
+	vi_addr spoffs;
+
+	vb = vi->buflist;
+	if(!(sp = vi_buf_find_span(vb, vi->view_start, &spoffs))) {
+		sp = vb->spans;
+		spoffs = 0;
+	}
+	spend = vb->spans + vb->num_spans;
+
+	vi_clear();
+
+	for(i=0; i<term_heig
 }
 
 struct vi_buffer *vi_new_buf(struct visor *vi, const char *path)
