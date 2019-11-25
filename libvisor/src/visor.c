@@ -215,8 +215,16 @@ int vi_delete_buf(struct visor *vi, struct vi_buffer *vb)
 		return -1;
 	}
 
+	if(vb->fp) {
+		if(vb->file_mapped) {
+			vi_unmap(vb->fp);
+		} else {
+			vi_free(vb->orig);
+		}
+		vi_close(vb->fp);
+	}
+
 	vi_free(vb->path);
-	vi_free(vb->orig);
 	vi_free(vb->add);
 	vi_free(vb->spans);
 	return 0;
