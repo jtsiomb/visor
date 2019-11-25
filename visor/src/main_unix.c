@@ -26,6 +26,19 @@ static void file_unmap(vi_file *file);
 static long file_read(vi_file *file, void *buf, long count);
 static long file_write(vi_file *file, void *buf, long count);
 static long file_seek(vi_file *file, long offs, int whence);
+/* tty operations */
+static void tty_clear(void *cls);
+static void tty_clear_line(void *cls);
+static void tty_clear_line_at(int y, void *cls);
+static void tty_setcursor(int x, int y, void *cls);
+static void tty_putchar(char c, void *cls);
+static void tty_putchar_at(int x, int y, char c, void *cls);
+static void tty_scroll(int nlines, void *cls);
+static void tty_del_back(void *cls);
+static void tty_del_fwd(void *cls);
+static void tty_status(char *s, void *cls);
+static void tty_flush(void *cls);
+
 
 static struct visor *vi;
 
@@ -42,13 +55,11 @@ static struct vi_fileops fops = {
 	file_read, file_write, file_seek
 };
 
-/*
 static struct vi_ttyops ttyops = {
 	tty_clear, tty_clear_line, tty_clear_line_at,
 	tty_setcursor, tty_putchar, tty_putchar_at,
-	tty_scroll, tty_del_back, tty_del_fwd, tty_status
+	tty_scroll, tty_del_back, tty_del_fwd, tty_status, tty_flush
 };
-*/
 
 int main(int argc, char **argv)
 {
@@ -106,12 +117,15 @@ static int init(void)
 		return -1;
 	}
 	vi_set_fileops(vi, &fops);
+	vi_set_ttyops(vi, &ttyops);
 
 	for(i=0; i<num_fpaths; i++) {
 		if(!vi_new_buf(vi, fpaths[i])) {
 			return -1;
 		}
 	}
+
+	term_resize_func(resized);
 	return 0;
 }
 
@@ -121,6 +135,11 @@ static void cleanup(void)
 		vi_destroy(vi);
 	}
 	term_cleanup();
+}
+
+static void resized(int x, int y)
+{
+	vi_term_size(vi, x, y);
 }
 
 static vi_file *file_open(const char *path, unsigned int flags)
@@ -202,4 +221,63 @@ static long file_seek(vi_file *vif, long offs, int whence)
 {
 	struct file *file = vif;
 	return lseek(file->fd, offs, whence);
+}
+
+/* tty operations */
+
+static void tty_clear(void *cls)
+{
+	term_clear();
+}
+
+static void tty_clear_line(void *cls)
+{
+	/* TODO */
+}
+
+static void tty_clear_line_at(int y, void *cls)
+{
+	term_setcursor(y, 0);
+	/* TODO */
+}
+
+static void tty_setcursor(int x, int y, void *cls)
+{
+	term_setcursor(y, x);
+}
+
+static void tty_putchar(char c, void *cls)
+{
+	term_putchar(c);
+}
+
+static void tty_putchar_at(int x, int y, char c, void *cls)
+{
+	term_setcursor(y, x);
+	term_putchar(c);
+}
+
+static void tty_scroll(int nlines, void *cls)
+{
+	/* TODO */
+}
+
+static void tty_del_back(void *cls)
+{
+	/* TODO */
+}
+
+static void tty_del_fwd(void *cls)
+{
+	/* TODO */
+}
+
+static void tty_status(char *s, void *cls)
+{
+	/* TODO */
+}
+
+static void tty_flush(void *cls)
+{
+	term_flush();
 }

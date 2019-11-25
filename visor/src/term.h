@@ -41,11 +41,14 @@ void term_getsize(int *width, int *height);
 void term_resize_func(void (*func)(int, int));
 
 void term_send(const char *s, int size);
+void term_putchar(char c);
 void term_puts(const char *s);
 void term_printf(const char *fmt, ...);
 void term_flush(void);
 
 void term_clear(void);
+void term_setcursor(int row, int col);
+
 int term_getchar(void);
 
 #endif	/* TERM_H_ */

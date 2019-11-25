@@ -43,6 +43,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define vi_del_back()		vi->tty.del_back(vi->tty_cls)
 #define vi_del_fwd()		vi->tty.del_fwd(vi->tty_cls)
 #define vi_status(s)		vi->tty.status(s, vi->tty_cls)
+#define vi_flush()			vi->tty.flush(vi->tty_cls)
 
 static int remove_buf(struct visor *vi, struct vi_buffer *vb);
 static int add_span(struct vi_buffer *vb, vi_addr at, int src, vi_addr start, unsigned long size);
@@ -99,20 +100,57 @@ void vi_term_size(struct visor *vi, int xsz, int ysz)
 
 void vi_redraw(struct visor *vi)
 {
+	int i, col, cur_x = 0, cur_y = 0;
+	char c;
 	struct vi_buffer *vb;
-	struct vi_span *sp, *spend;
-	vi_addr spoffs;
+	struct vi_span *sp, *spans_end;
+	const char *tptr, *tend;
+	vi_addr spoffs, addr;
 
 	vb = vi->buflist;
-	if(!(sp = vi_buf_find_span(vb, vi->view_start, &spoffs))) {
+	if(!(sp = vi_buf_find_span(vb, vb->view_start, &spoffs))) {
 		sp = vb->spans;
 		spoffs = 0;
 	}
-	spend = vb->spans + vb->num_spans;
+	spans_end = vb->spans + vb->num_spans;
+
+	tptr = vi_buf_span_text(vb, sp);
+	tend = tptr + sp->size;
+	tptr += spoffs;
 
 	vi_clear();
 
-	for(i=0; i<term_heig
+	addr = vb->view_start;
+	for(i=0; i<vi->term_height; i++) {
+		vi_setcursor(0, i);
+		col = -vb->view_xscroll - 1;
+		while(++col < vi->term_width && (c = (addr++, *tptr++)) != '\n') {
+			if(addr == vb->cursor) {
+				cur_x = col;
+				cur_y = i;
+			}
+
+			if(col >= 0) {
+				vi_putchar(c);
+			}
+			if(tptr >= tend) {
+				if(++sp >= spans_end) {
+					goto end;
+				}
+				tptr = vi_buf_span_text(vb, sp);
+				tend = tptr + sp->size;
+			}
+		}
+	}
+end:
+
+	while(i < vi->term_height) {
+		vi_setcursor(0, i++);
+		vi_putchar('~');
+	}
+
+	vi_setcursor(cur_x, cur_y);
+	vi_flush();
 }
 
 struct vi_buffer *vi_new_buf(struct visor *vi, const char *path)

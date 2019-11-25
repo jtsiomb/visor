@@ -91,6 +91,11 @@ void term_send(const char *s, int size)
 	}
 }
 
+void term_putchar(char c)
+{
+	term_send(&c, 1);
+}
+
 void term_puts(const char *s)
 {
 	term_send(s, strlen(s));
@@ -139,6 +144,16 @@ void term_flush(void)
 void term_clear(void)
 {
 	term_puts("\033[2J");
+}
+
+void term_cursor(int show)
+{
+	term_printf("\033[?25%c", show ? 'h' : 'l');
+}
+
+void term_setcursor(int row, int col)
+{
+	term_printf("\033[%d;%dH", row + 1, col + 1);
 }
 
 int term_getchar(void)

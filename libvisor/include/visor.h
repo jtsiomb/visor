@@ -97,6 +97,7 @@ struct vi_ttyops {
 	void (*del_back)(void *cls);
 	void (*del_fwd)(void *cls);
 	void (*status)(char *s, void *cls);
+	void (*flush)(void *cls);
 };
 
 /* Create a new instance of the visor editor.
@@ -111,7 +112,7 @@ void vi_destroy(struct visor *vi);
 void vi_set_fileops(struct visor *vi, struct vi_fileops *fop);
 void vi_set_ttyops(struct visor *vi, struct vi_ttyops *tty);
 
-void vi_window(struct visor *vi, int xsz, int ysz);
+void vi_term_size(struct visor *vi, int xsz, int ysz);
 void vi_redraw(struct visor *vi);
 
 /* vi_new_buf creates a new buffer and inserts it in the buffer list. If the
