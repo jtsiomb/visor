@@ -100,12 +100,14 @@ void vi_term_size(struct visor *vi, int xsz, int ysz)
 
 void vi_redraw(struct visor *vi)
 {
-	int i, col, cur_x = 0, cur_y = 0;
+	int i = 0, col, cur_x = 0, cur_y = 0;
 	char c;
 	struct vi_buffer *vb;
 	struct vi_span *sp, *spans_end;
 	const char *tptr, *tend;
 	vi_addr spoffs, addr;
+
+	if(!vi->buflist) goto end;
 
 	vb = vi->buflist;
 	if(!(sp = vi_buf_find_span(vb, vb->view_start, &spoffs))) {

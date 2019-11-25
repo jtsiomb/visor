@@ -56,9 +56,18 @@ int term_init(const char *ttypath)
 
 void term_cleanup(void)
 {
+	term_clear();
+	term_setcursor(0, 0);
+	term_flush();
 	tcsetattr(ttyfd, TCSAFLUSH, &saved_term);
 	close(ttyfd);
 	ttyfd = -1;
+}
+
+void term_reset(void)
+{
+	term_puts("\033c");
+	term_flush();
 }
 
 void term_getsize(int *width, int *height)

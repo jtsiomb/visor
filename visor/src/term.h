@@ -36,6 +36,7 @@ union term_event {
 
 int term_init(const char *ttypath);
 void term_cleanup(void);
+void term_reset(void);
 
 void term_getsize(int *width, int *height);
 void term_resize_func(void (*func)(int, int));
