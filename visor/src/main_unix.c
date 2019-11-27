@@ -78,6 +78,7 @@ int main(int argc, char **argv)
 		switch(c) {
 		case 27:
 		case 'q':
+		case -1:
 			goto end;
 		}
 	}

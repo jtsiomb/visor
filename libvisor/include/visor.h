@@ -160,4 +160,8 @@ void vi_buf_ins_end(struct vi_buffer *vb);
 void vi_buf_del(struct vi_buffer *vb, vi_motion mot);
 void vi_buf_yank(struct vi_buffer *vb, vi_motion mot);
 
+
+/* high level user input handling */
+void vi_keypress(struct visor *vi, int key);
+
 #endif	/* LIB_VISOR_TEXTED_CORE_H_ */
