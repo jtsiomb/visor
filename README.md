@@ -1,6 +1,11 @@
 visor text editor & text editor framework
 =========================================
 
+WARNING: none of this is completed yet, nor is the editor in a working state.
+Adding this notice here since this seems to be running out of steam for now.
+Until this notice is removed, don't bother trying this. When I pick this up
+again and bring it to a usable state, I'll remove this warning.
+
 About
 -----
 *visor* is a lightweight, system-independent, device-independent, maximally
